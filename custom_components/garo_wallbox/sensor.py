@@ -1,70 +1,130 @@
+"""Implementation of Garo Wallbox sensors."""
 import logging
 
 import voluptuous as vol
 
 from homeassistant.const import (
-    CONF_ICON, 
-    CONF_NAME, 
-    TEMP_CELSIUS)
+    UnitOfTemperature,
+    UnitOfEnergy,
+    UnitOfElectricCurrent,
+    UnitOfPower,
+)
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.components.sensor import (
-    DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_POWER,
-    PLATFORM_SCHEMA,
-    STATE_CLASS_TOTAL_INCREASING,
-    STATE_CLASS_MEASUREMENT,
+    SensorDeviceClass,
+    SensorStateClass,
     SensorEntity,
 )
-from homeassistant.helpers import config_validation as cv, entity_platform, service
+
+from homeassistant.helpers import config_validation as cv, entity_platform
 
 from . import DOMAIN as GARO_DOMAIN
 
 from .garo import GaroDevice, Mode, Status
-from .const import (ATTR_MODES, SERVICE_SET_MODE, SERVICE_SET_CURRENT_LIMIT)
+from .const import ATTR_MODES, SERVICE_SET_MODE, SERVICE_SET_CURRENT_LIMIT
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    pass
+async def async_setup_platform(
+    hass: HomeAssistant,  # pylint: disable=unused-argument
+    config,  # pylint: disable=unused-argument
+    async_add_entities,  # pylint: disable=unused-argument
+    discovery_info=None,  # pylint: disable=unused-argument
+):
+    """Setup platform."""
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     """Set up using config_entry."""
     device = hass.data[GARO_DOMAIN].get(entry.entry_id)
-    async_add_entities([
-        GaroMainSensor(device),
-        GaroSensor(device, 'Status', 'status'),
-        GaroSensor(device, "Charging Current", 'current_charging_current', 'A'),
-        GaroSensor(device, "Charging Power", 'current_charging_power', 'W'),
-        GaroSensor(device, "Phases", 'nr_of_phases'),
-        GaroSensor(device, "Current Limit", 'current_limit', 'A'),
-        GaroSensor(device, "Pilot Level", 'pilot_level', 'A'),
-        GaroSensor(device, "Session Energy", 'acc_session_energy', "Wh"),
-        GaroSensor(device, "Total Energy", 'latest_reading', "Wh"),
-        GaroSensor(device, "Total Energy (kWh)", 'latest_reading_k', "kWh"),
-        GaroSensor(device, "Temperature", 'current_temperature', TEMP_CELSIUS),
-        ])
+    async_add_entities(
+        [
+            GaroMainSensor(device),
+            GaroSensor(
+                device,
+                "Status",
+                "status",
+            ),
+            GaroSensor(
+                device,
+                "Charging Current",
+                "current_charging_current",
+                UnitOfElectricCurrent.AMPERE,
+            ),
+            GaroSensor(
+                device,
+                "Charging Power",
+                "current_charging_power",
+                UnitOfPower.WATT,
+            ),
+            GaroSensor(
+                device,
+                "Phases",
+                "nr_of_phases",
+            ),
+            GaroSensor(
+                device,
+                "Current Limit",
+                "current_limit",
+                UnitOfElectricCurrent.AMPERE,
+            ),
+            GaroSensor(
+                device,
+                "Pilot Level",
+                "pilot_level",
+                UnitOfElectricCurrent.AMPERE,
+            ),
+            GaroSensor(
+                device,
+                "Session Energy",
+                "acc_session_energy",
+                UnitOfEnergy.WATT_HOUR,
+            ),
+            GaroSensor(
+                device,
+                "Total Energy",
+                "latest_reading",
+                UnitOfEnergy.WATT_HOUR,
+            ),
+            GaroSensor(
+                device,
+                "Total Energy (kWh)",
+                "latest_reading_k",
+                UnitOfEnergy.KILO_WATT_HOUR,
+            ),
+            GaroSensor(
+                device,
+                "Temperature",
+                "current_temperature",
+                UnitOfTemperature.CELSIUS,
+            ),
+        ]
+    )
 
     platform = entity_platform.current_platform.get()
 
     platform.async_register_entity_service(
         SERVICE_SET_MODE,
         {
-            vol.Required('mode'): cv.string,
+            vol.Required("mode"): cv.string,
         },
         "async_set_mode",
     )
     platform.async_register_entity_service(
         SERVICE_SET_CURRENT_LIMIT,
         {
-            vol.Required('limit'): cv.positive_int,
+            vol.Required("limit"): cv.positive_int,
         },
         "async_set_current_limit",
     )
 
+
 class GaroMainSensor(Entity):
-    def __init__(self, device: GaroDevice):
+    """Class representing Garo Wallbox main sensor."""
+
+    def __init__(self, device: GaroDevice) -> None:
         """Initialize the sensor."""
         self._device = device
         self._name = f"{device.name}"
@@ -73,7 +133,7 @@ class GaroMainSensor(Entity):
     @property
     def unique_id(self):
         """Return a unique ID."""
-        return f"{self._device.id}-{self._sensor}"
+        return f"{self._device.id_}-{self._sensor}"
 
     @property
     def name(self):
@@ -91,15 +151,19 @@ class GaroMainSensor(Entity):
 
     @property
     def modes(self):
+        """Return the current GARO Wallbox mode."""
         return [f.name for f in Mode]
 
     async def async_set_mode(self, mode):
+        """Set the GARO Wallbox mode."""
         await self._device.set_mode(Mode[mode])
 
     async def async_set_current_limit(self, limit):
+        """Set the GARO Wallbox charging current limit."""
         await self._device.set_current_limit(limit)
 
     async def async_update(self):
+        """Update Garo Wallbox status."""
         await self._device.async_update()
 
     @property
@@ -115,25 +179,26 @@ class GaroMainSensor(Entity):
         except KeyError:
             pass
         return attrs
-        
+
 
 class GaroSensor(SensorEntity):
-    def __init__(self, device: GaroDevice, name, sensor, unit = None):
+    """Class representing Garo Wallbox sensor."""
+
+    def __init__(self, device: GaroDevice, name, sensor, unit=None) -> None:
         """Initialize the sensor."""
         self._device = device
         self._name = f"{device.name} {name}"
         self._sensor = sensor
         self._unit = unit
         if self._sensor == "latest_reading" or self._sensor == "latest_reading_k":
-            _LOGGER.info(f'Initiating State sensors {self._name}')
-            self._attr_state_class = STATE_CLASS_TOTAL_INCREASING #STATE_CLASS_MEASUREMENT
-            self._attr_device_class = DEVICE_CLASS_ENERGY
-
+            _LOGGER.info("Initiating State sensors %s", self._name)
+            self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+            self._attr_device_class = SensorDeviceClass.ENERGY
 
     @property
     def unique_id(self):
         """Return a unique ID."""
-        return f"{self._device.id}-{self._sensor}"
+        return f"{self._device.id_}-{self._sensor}"
 
     @property
     def name(self):
@@ -156,7 +221,7 @@ class GaroSensor(SensorEntity):
             icon = "mdi:flash"
         elif self._sensor == "acc_session_energy":
             icon = "mdi:flash"
-        elif self._sensor == "latest_reading":            
+        elif self._sensor == "latest_reading":
             icon = "mdi:flash"
         elif self._sensor == "latest_reading_k":
             icon = "mdi:flash"
@@ -180,7 +245,7 @@ class GaroSensor(SensorEntity):
                 Status.RCD_FAULT: "mdi:alert",
                 Status.SEARCH_COMM: "mdi:help",
                 Status.VENT_FAULT: "mdi:alert",
-                Status.UNAVAILABLE: "mdi:alert"
+                Status.UNAVAILABLE: "mdi:alert",
             }
             icon = switcher.get(self._device.status.status, None)
         elif self._sensor == "nr_of_phases":
@@ -203,7 +268,7 @@ class GaroSensor(SensorEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        if self._sensor == 'status':
+        if self._sensor == "status":
             return self.status_as_str()
 
         return self._device.status.__dict__[self._sensor]
@@ -213,6 +278,7 @@ class GaroSensor(SensorEntity):
         return self._unit
 
     async def async_update(self):
+        """Update the Garo Wallbox status."""
         await self._device.async_update()
 
     @property
@@ -220,9 +286,8 @@ class GaroSensor(SensorEntity):
         """Return a device description for device registry."""
         return self._device.device_info
 
-    
-
     def status_as_str(self):
+        """Return status as a string."""
         switcher = {
             Status.CABLE_FAULT: "Cable fault",
             Status.CHANGING: "Changing...",
@@ -242,7 +307,6 @@ class GaroSensor(SensorEntity):
             Status.RCD_FAULT: "RCD fault",
             Status.SEARCH_COMM: "Vehicle connected",
             Status.VENT_FAULT: "Ventilation required",
-            Status.UNAVAILABLE: "Unavailable"
+            Status.UNAVAILABLE: "Unavailable",
         }
         return switcher.get(self._device.status.status, "Unknown")
-

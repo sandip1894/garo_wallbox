@@ -35,12 +35,17 @@ SCAN_INTERVAL = timedelta(seconds=60)
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup(hass: HomeAssistant, config: Dict) -> bool:
+
+async def async_setup(
+    hass: HomeAssistant, config: dict  # pylint: disable=unused-argument
+) -> bool:
     """Set up the Garo Wallbox component."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
-async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry):
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Setup a config entry."""
     conf = entry.data
     device = await garo_setup(hass, conf[CONF_HOST], conf[CONF_NAME])
     if not device:
@@ -51,11 +56,12 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry):
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
 
-    """device_registry = await dr.async_get_registry(hass)
-    device_registry.async_get_or_create(**device.device_info)"""
+    # device_registry = await dr.async_get_registry(hass)
+    # device_registry.async_get_or_create(**device.device_info)
     return True
 
-async def async_unload_entry(hass, config_entry):
+
+async def async_unload_entry(hass: HomeAssistant, config_entry):
     """Unload a config entry."""
     await asyncio.wait(
         [
@@ -68,19 +74,20 @@ async def async_unload_entry(hass, config_entry):
         hass.data.pop(DOMAIN)
     return True
 
-async def garo_setup(hass, host, name):
+
+async def garo_setup(hass: HomeAssistant, host, name):
     """Create a Garo instance only once."""
     session = hass.helpers.aiohttp_client.async_get_clientsession()
     try:
         with timeout(TIMEOUT):
             device = GaroDevice(host, name, session)
             await device.init()
-    except asyncio.TimeoutError:
+    except asyncio.TimeoutError as exc:
         _LOGGER.debug("Connection to %s timed out", host)
-        raise ConfigEntryNotReady
-    except ClientConnectionError:
+        raise ConfigEntryNotReady from exc
+    except ClientConnectionError as exc:
         _LOGGER.debug("ClientConnectionError to %s", host)
-        raise ConfigEntryNotReady
+        raise ConfigEntryNotReady from exc
     except Exception:  # pylint: disable=broad-except
         _LOGGER.error("Unexpected error creating device %s", host)
         return None

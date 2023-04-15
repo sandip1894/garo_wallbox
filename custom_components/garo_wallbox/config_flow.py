@@ -74,7 +74,7 @@ class FlowHandler(config_entries.ConfigFlow):
             return await self.async_step_user()
         return await self._create_device(host, user_input[CONF_NAME])
 
-    async def async_step_discovery(self, user_input):
+    async def async_step_discovery(self, discovery_info):
         """Initialize step from discovery."""
-        _LOGGER.info("Discovered device: %s", user_input)
-        return await self._create_entry(user_input[KEY_IP], None)
+        _LOGGER.info("Discovered device: %s", discovery_info)
+        return await self._create_entry(discovery_info[KEY_IP], None)
