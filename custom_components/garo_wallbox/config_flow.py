@@ -15,6 +15,7 @@ from .const import KEY_IP, TIMEOUT
 
 _LOGGER = logging.getLogger(__name__)
 
+
 @config_entries.HANDLERS.register("garo_wallbox")
 class FlowHandler(config_entries.ConfigFlow):
     """Handle a config flow."""
@@ -29,7 +30,9 @@ class FlowHandler(config_entries.ConfigFlow):
             if entry.data[KEY_IP] == host:
                 return self.async_abort(reason="already_configured")
 
-        return self.async_create_entry(title=host, data={CONF_HOST: host, CONF_NAME: name})
+        return self.async_create_entry(
+            title=host, data={CONF_HOST: host, CONF_NAME: name}
+        )
 
     async def _create_device(self, host, name):
         """Create device."""
@@ -55,12 +58,14 @@ class FlowHandler(config_entries.ConfigFlow):
         """User initiated config flow."""
         if user_input is None:
             return self.async_show_form(
-                step_id="user", data_schema=vol.Schema({
-                    vol.Required(CONF_HOST): str,
-                    vol.Optional(CONF_NAME): str
-                    })
+                step_id="user",
+                data_schema=vol.Schema(
+                    {vol.Required(CONF_HOST): str, vol.Optional(CONF_NAME): str}
+                ),
             )
-        return await self._create_device(user_input[CONF_HOST], user_input[CONF_NAME])
+        return await self._create_device(
+            user_input[CONF_HOST], user_input.get(CONF_NAME)
+        )
 
     async def async_step_import(self, user_input):
         """Import a config entry."""
