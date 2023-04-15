@@ -189,8 +189,8 @@ class GaroSensor(SensorEntity):
         self._device = device
         self._name = f"{device.name} {name}"
         self._sensor = sensor
-        self._unit = unit
-        if self._sensor == "latest_reading" or self._sensor == "latest_reading_k":
+        self._attr_native_unit_of_measurement = unit
+        if self._sensor in ("latest_reading", "latest_reading_k"):
             _LOGGER.info("Initiating State sensors %s", self._name)
             self._attr_state_class = SensorStateClass.TOTAL_INCREASING
             self._attr_device_class = SensorDeviceClass.ENERGY
@@ -258,24 +258,10 @@ class GaroSensor(SensorEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return round(self.state, 2)
-
-    @property
-    def native_unit_of_measurement(self):
-        """Return the unit the value is expressed in."""
-        return self._unit
-
-    @property
-    def state(self):
-        """Return the state of the sensor."""
         if self._sensor == "status":
             return self.status_as_str()
 
         return self._device.status.__dict__[self._sensor]
-
-    @property
-    def unit_of_measurement(self):
-        return self._unit
 
     async def async_update(self):
         """Update the Garo Wallbox status."""
