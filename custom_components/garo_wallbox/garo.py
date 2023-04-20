@@ -5,6 +5,7 @@ from datetime import timedelta
 from enum import Enum
 
 from homeassistant.util import Throttle
+from homeassistant.helpers.entity import DeviceInfo
 
 from .const import DOMAIN, GARO_PRODUCT_MAP
 
@@ -91,12 +92,12 @@ class GaroDevice:
     @property
     def device_info(self):
         """Return a device description for device registry."""
-        return {
-            "identifiers": {(DOMAIN, self.id_)},
-            "manufacturer": "Garo",
-            "model": self.info.model,
-            "name": self.name,
-        }
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.id_)},
+            manufacturer="Garo",
+            model=self.info.model,
+            name=self.name,
+        )
 
     def _request(self, parameter_list):
         pass

@@ -22,7 +22,7 @@ from homeassistant.helpers import config_validation as cv, entity_platform
 from . import DOMAIN as GARO_DOMAIN
 
 from .garo import GaroDevice, Mode, Status
-from .const import ATTR_MODES, SERVICE_SET_MODE, SERVICE_SET_CURRENT_LIMIT
+from .const import SERVICE_SET_MODE, SERVICE_SET_CURRENT_LIMIT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -87,12 +87,16 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 "Total Energy",
                 "latest_reading",
                 UnitOfEnergy.WATT_HOUR,
+                state_class=SensorStateClass.TOTAL_INCREASING,
+                device_class=SensorDeviceClass.ENERGY,
             ),
             GaroSensor(
                 device,
                 "Total Energy (kWh)",
                 "latest_reading_k",
                 UnitOfEnergy.KILO_WATT_HOUR,
+                state_class=SensorStateClass.TOTAL_INCREASING,
+                device_class=SensorDeviceClass.ENERGY,
             ),
             GaroSensor(
                 device,
@@ -127,32 +131,15 @@ class GaroMainSensor(Entity):
     def __init__(self, device: GaroDevice) -> None:
         """Initialize the sensor."""
         self._device = device
-        self._name = f"{device.name}"
-        self._sensor = "sensor"
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return f"{self._device.id_}-{self._sensor}"
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def icon(self):
-        return "mdi:car-electric"
+        self._attr_name = f"{device.name}"
+        self._attr_unique_id = f"{self._device.id_}-sensor"
+        self._attr_icon = "mdi:car-electric"
+        self._attr_device_info = device.device_info
 
     @property
     def state(self):
         """Return the state of the sensor."""
         return self._device.status.mode.name
-
-    @property
-    def modes(self):
-        """Return the current GARO Wallbox mode."""
-        return [f.name for f in Mode]
 
     async def async_set_mode(self, mode):
         """Set the GARO Wallbox mode."""
@@ -166,44 +153,33 @@ class GaroMainSensor(Entity):
         """Update Garo Wallbox status."""
         await self._device.async_update()
 
-    @property
-    def device_info(self):
-        """Return a device description for device registry."""
-        return self._device.device_info
-
-    @property
-    def device_state_attributes(self):
-        attrs = {}
-        try:
-            attrs[ATTR_MODES] = self.modes
-        except KeyError:
-            pass
-        return attrs
-
 
 class GaroSensor(SensorEntity):
     """Class representing Garo Wallbox sensor."""
 
-    def __init__(self, device: GaroDevice, name, sensor, unit=None) -> None:
+    def __init__(
+        self,
+        device: GaroDevice,
+        name,
+        sensor,
+        unit=None,
+        state_class=None,
+        device_class=None,
+        icon=None,
+    ) -> None:
         """Initialize the sensor."""
+
         self._device = device
-        self._name = f"{device.name} {name}"
         self._sensor = sensor
+
+        self._attr_name = f"{device.name} {name}"
         self._attr_native_unit_of_measurement = unit
-        if self._sensor in ("latest_reading", "latest_reading_k"):
-            _LOGGER.info("Initiating State sensors %s", self._name)
-            self._attr_state_class = SensorStateClass.TOTAL_INCREASING
-            self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_unique_id = f"{device.id_}-{sensor}"
+        self._attr_device_info = device.device_info
 
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return f"{self._device.id_}-{self._sensor}"
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
+        self._attr_state_class = state_class
+        self._attr_device_class = device_class
+        self._attr_icon = icon
 
     @property
     def icon(self):
@@ -266,11 +242,6 @@ class GaroSensor(SensorEntity):
     async def async_update(self):
         """Update the Garo Wallbox status."""
         await self._device.async_update()
-
-    @property
-    def device_info(self):
-        """Return a device description for device registry."""
-        return self._device.device_info
 
     def status_as_str(self):
         """Return status as a string."""
