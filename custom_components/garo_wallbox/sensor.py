@@ -46,41 +46,48 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 device,
                 "Status",
                 "status",
+                icon_fn=_status_icon,
             ),
             GaroSensor(
                 device,
                 "Charging Current",
                 "current_charging_current",
                 UnitOfElectricCurrent.AMPERE,
+                icon="mdi:flash",
             ),
             GaroSensor(
                 device,
                 "Charging Power",
                 "current_charging_power",
                 UnitOfPower.WATT,
+                icon="mdi:flash",
             ),
             GaroSensor(
                 device,
                 "Phases",
                 "nr_of_phases",
+                icon_fn=_nr_of_phases_icon,
             ),
             GaroSensor(
                 device,
                 "Current Limit",
                 "current_limit",
                 UnitOfElectricCurrent.AMPERE,
+                icon="mdi:flash",
             ),
             GaroSensor(
                 device,
                 "Pilot Level",
                 "pilot_level",
                 UnitOfElectricCurrent.AMPERE,
+                icon="mdi:flash",
             ),
             GaroSensor(
                 device,
                 "Session Energy",
                 "acc_session_energy",
                 UnitOfEnergy.WATT_HOUR,
+                icon="mdi:flash",
             ),
             GaroSensor(
                 device,
@@ -89,6 +96,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 UnitOfEnergy.WATT_HOUR,
                 state_class=SensorStateClass.TOTAL_INCREASING,
                 device_class=SensorDeviceClass.ENERGY,
+                icon="mdi:flash",
             ),
             GaroSensor(
                 device,
@@ -97,12 +105,14 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 UnitOfEnergy.KILO_WATT_HOUR,
                 state_class=SensorStateClass.TOTAL_INCREASING,
                 device_class=SensorDeviceClass.ENERGY,
+                icon="mdi:flash",
             ),
             GaroSensor(
                 device,
                 "Temperature",
                 "current_temperature",
                 UnitOfTemperature.CELSIUS,
+                icon="mdi:thermometer",
             ),
         ]
     )
@@ -166,6 +176,7 @@ class GaroSensor(SensorEntity):
         state_class=None,
         device_class=None,
         icon=None,
+        icon_fn=None,
     ) -> None:
         """Initialize the sensor."""
 
@@ -180,56 +191,15 @@ class GaroSensor(SensorEntity):
         self._attr_state_class = state_class
         self._attr_device_class = device_class
         self._attr_icon = icon
+        self._attr_icon_fn = icon_fn
 
     @property
     def icon(self):
         """Return the icon of the sensor."""
-        icon = None
-        if self._sensor == "current_temperature":
-            icon = "mdi:thermometer"
-        elif self._sensor == "current_charging_current":
-            icon = "mdi:flash"
-        elif self._sensor == "current_charging_power":
-            icon = "mdi:flash"
-        elif self._sensor == "current_limit":
-            icon = "mdi:flash"
-        elif self._sensor == "pilot_level":
-            icon = "mdi:flash"
-        elif self._sensor == "acc_session_energy":
-            icon = "mdi:flash"
-        elif self._sensor == "latest_reading":
-            icon = "mdi:flash"
-        elif self._sensor == "latest_reading_k":
-            icon = "mdi:flash"
-        elif self._sensor == "status":
-            switcher = {
-                Status.CABLE_FAULT: "mdi:alert",
-                Status.CHANGING: "mdi:update",
-                Status.CHARGING: "mdi:battery-charging",
-                Status.CHARGING_CANCELLED: "mdi:cancel",
-                Status.CHARGING_FINISHED: "mdi:battery",
-                Status.CHARGING_PAUSED: "mdi:pause",
-                Status.CONNECTED: "mdi:power-plug",
-                Status.CONTACTOR_FAULT: "mdi:alert",
-                Status.DISABLED: "mdi:stop-circle-outline",
-                Status.CRITICAL_TEMPERATURE: "mdi:alert",
-                Status.DC_ERROR: "mdi:alert",
-                Status.INITIALIZATION: "mdi:timer-sand",
-                Status.LOCK_FAULT: "mdi:alert",
-                Status.NOT_CONNECTED: "mdi:power-plug-off",
-                Status.OVERHEAT: "mdi:alert",
-                Status.RCD_FAULT: "mdi:alert",
-                Status.SEARCH_COMM: "mdi:help",
-                Status.VENT_FAULT: "mdi:alert",
-                Status.UNAVAILABLE: "mdi:alert",
-            }
-            icon = switcher.get(self._device.status.status, None)
-        elif self._sensor == "nr_of_phases":
-            if self.state == 1:
-                icon = "mdi:record-circle-outline"
-            else:
-                icon = "mdi:google-circles-communities"
-        return icon
+        if self._attr_icon_fn is None:
+            return super().icon
+
+        return self._attr_icon_fn(self.native_value)
 
     @property
     def native_value(self):
@@ -267,3 +237,33 @@ class GaroSensor(SensorEntity):
             Status.UNAVAILABLE: "Unavailable",
         }
         return switcher.get(self._device.status.status, "Unknown")
+
+
+def _status_icon(value):
+    return {
+        Status.CABLE_FAULT: "mdi:alert",
+        Status.CHANGING: "mdi:update",
+        Status.CHARGING: "mdi:battery-charging",
+        Status.CHARGING_CANCELLED: "mdi:cancel",
+        Status.CHARGING_FINISHED: "mdi:battery",
+        Status.CHARGING_PAUSED: "mdi:pause",
+        Status.CONNECTED: "mdi:power-plug",
+        Status.CONTACTOR_FAULT: "mdi:alert",
+        Status.DISABLED: "mdi:stop-circle-outline",
+        Status.CRITICAL_TEMPERATURE: "mdi:alert",
+        Status.DC_ERROR: "mdi:alert",
+        Status.INITIALIZATION: "mdi:timer-sand",
+        Status.LOCK_FAULT: "mdi:alert",
+        Status.NOT_CONNECTED: "mdi:power-plug-off",
+        Status.OVERHEAT: "mdi:alert",
+        Status.RCD_FAULT: "mdi:alert",
+        Status.SEARCH_COMM: "mdi:help",
+        Status.VENT_FAULT: "mdi:alert",
+        Status.UNAVAILABLE: "mdi:alert",
+    }.get(value, None)
+
+
+def _nr_of_phases_icon(value):
+    if value == 1:
+        return "mdi:record-circle-outline"
+    return "mdi:google-circles-communities"
