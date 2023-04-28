@@ -180,13 +180,13 @@ class GaroDevice:
 
 
 class GaroStatus:
-    """Class representing Daro status."""
+    """Class representing Garo status."""
 
     def __init__(self, response, prev_status) -> None:
         self.ocpp_state = response["ocppState"]
         self.free_charging = response["freeCharging"]
         self.ocpp_connection_state = response["ocppConnectionState"]
-        self.status = Status(response["connector"])
+        self.status = _status_to_descr(Status(response["connector"]))
         self.mode = Mode(response["mode"])
         self.current_limit = response["currentLimit"]
         self.factory_current_limit = response["factoryCurrentLimit"]
@@ -212,6 +212,31 @@ class GaroStatus:
         self.pilot_level = response["pilotLevel"]
         self.session_start_value = response["sessionStartValue"]
         self.nr_of_phases = response["nrOfPhases"]
+
+
+def _status_to_descr(status):
+    """Return status as a string."""
+    return {
+        Status.CABLE_FAULT: "Cable fault",
+        Status.CHANGING: "Changing...",
+        Status.CHARGING: "Charging",
+        Status.CHARGING_CANCELLED: "Charging cancelled",
+        Status.CHARGING_FINISHED: "Charging finished",
+        Status.CHARGING_PAUSED: "Charging paused",
+        Status.DISABLED: "Charging disabled",
+        Status.CONNECTED: "Vehicle connected",
+        Status.CONTACTOR_FAULT: "Contactor fault",
+        Status.CRITICAL_TEMPERATURE: "Overtemperature, charging cancelled",
+        Status.DC_ERROR: "DC error",
+        Status.INITIALIZATION: "Charger starting...",
+        Status.LOCK_FAULT: "Lock fault",
+        Status.NOT_CONNECTED: "Vehicle not connected",
+        Status.OVERHEAT: "Overtemperature, charging temporarily restricted to 6A",
+        Status.RCD_FAULT: "RCD fault",
+        Status.SEARCH_COMM: "Vehicle connected",
+        Status.VENT_FAULT: "Ventilation required",
+        Status.UNAVAILABLE: "Unavailable",
+    }.get(status, "Unknown")
 
 
 class GaroDeviceInfo:

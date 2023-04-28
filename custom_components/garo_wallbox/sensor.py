@@ -1,5 +1,6 @@
 """Implementation of Garo Wallbox sensors."""
 import logging
+from typing import Any
 
 import voluptuous as vol
 
@@ -27,6 +28,7 @@ from .const import SERVICE_SET_MODE, SERVICE_SET_CURRENT_LIMIT
 _LOGGER = logging.getLogger(__name__)
 
 
+# TODO is it needed? What happens if removed?
 async def async_setup_platform(
     hass: HomeAssistant,  # pylint: disable=unused-argument
     config,  # pylint: disable=unused-argument
@@ -218,39 +220,11 @@ class GaroSensor(SensorEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        if self._sensor == "status":
-            return self.status_as_str()
-
         return self._device.status.__dict__[self._sensor]
 
     async def async_update(self):
         """Update the Garo Wallbox status."""
         await self._device.async_update()
-
-    def status_as_str(self):
-        """Return status as a string."""
-        switcher = {
-            Status.CABLE_FAULT: "Cable fault",
-            Status.CHANGING: "Changing...",
-            Status.CHARGING: "Charging",
-            Status.CHARGING_CANCELLED: "Charging cancelled",
-            Status.CHARGING_FINISHED: "Charging finished",
-            Status.CHARGING_PAUSED: "Charging paused",
-            Status.DISABLED: "Charging disabled",
-            Status.CONNECTED: "Vehicle connected",
-            Status.CONTACTOR_FAULT: "Contactor fault",
-            Status.CRITICAL_TEMPERATURE: "Overtemperature, charging cancelled",
-            Status.DC_ERROR: "DC error",
-            Status.INITIALIZATION: "Charger starting...",
-            Status.LOCK_FAULT: "Lock fault",
-            Status.NOT_CONNECTED: "Vehicle not connected",
-            Status.OVERHEAT: "Overtemperature, charging temporarily restricted to 6A",
-            Status.RCD_FAULT: "RCD fault",
-            Status.SEARCH_COMM: "Vehicle connected",
-            Status.VENT_FAULT: "Ventilation required",
-            Status.UNAVAILABLE: "Unavailable",
-        }
-        return switcher.get(self._device.status.status, "Unknown")
 
 
 def _status_icon(value):
