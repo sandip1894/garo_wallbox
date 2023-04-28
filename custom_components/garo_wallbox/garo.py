@@ -101,7 +101,7 @@ class GaroDevice:
 
     @property
     def chargers(self):
-        """Return a list of tubple with charger name and charger id"""
+        """Return a list of tuple with charger name and charger id"""
         return [
             ("Main Charger", "main_charger"),
             ("Twin Charger", "twin_charger"),
