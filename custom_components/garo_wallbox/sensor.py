@@ -1,6 +1,5 @@
 """Implementation of Garo Wallbox sensors."""
 import logging
-from typing import Any
 
 import voluptuous as vol
 
@@ -41,40 +40,19 @@ async def async_setup_platform(
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     """Set up using config_entry."""
     device = hass.data[GARO_DOMAIN].get(entry.entry_id)
+
+    # Add chargebox entities
     async_add_entities(
         [
             GaroMainSensor(device),
             GaroSensor(
                 device,
-                "Status",
-                "status",
-                device_class=SensorDeviceClass.ENUM,
-                icon_fn=_status_icon,
-            ),
-            GaroSensor(
-                device,
-                "Charging Current",
-                "current_charging_current",
-                unit=UnitOfElectricCurrent.AMPERE,
+                "Temperature",
+                "temperature",
+                unit=UnitOfTemperature.CELSIUS,
                 state_class=SensorStateClass.MEASUREMENT,
-                device_class=SensorDeviceClass.CURRENT,
-                icon="mdi:flash",
-            ),
-            GaroSensor(
-                device,
-                "Charging Power",
-                "current_charging_power",
-                unit=UnitOfPower.WATT,
-                state_class=SensorStateClass.MEASUREMENT,
-                device_class=SensorDeviceClass.POWER,
-                icon="mdi:flash",
-            ),
-            GaroSensor(
-                device,
-                "Phases",
-                "nr_of_phases",
-                icon_fn=_nr_of_phases_icon,
-                state_class=SensorStateClass.MEASUREMENT,
+                device_class=SensorDeviceClass.TEMPERATURE,
+                icon="mdi:thermometer",
             ),
             GaroSensor(
                 device,
@@ -85,53 +63,81 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 device_class=SensorDeviceClass.CURRENT,
                 icon="mdi:flash",
             ),
-            GaroSensor(
-                device,
-                "Pilot Level",
-                "pilot_level",
-                unit=UnitOfElectricCurrent.AMPERE,
-                state_class=SensorStateClass.MEASUREMENT,
-                device_class=SensorDeviceClass.CURRENT,
-                icon="mdi:flash",
-            ),
-            GaroSensor(
-                device,
-                "Session Energy",
-                "acc_session_energy",
-                unit=UnitOfEnergy.WATT_HOUR,
-                state_class=SensorStateClass.TOTAL_INCREASING,
-                device_class=SensorDeviceClass.ENERGY,
-                icon="mdi:flash",
-            ),
-            GaroSensor(
-                device,
-                "Total Energy",
-                "latest_reading",
-                unit=UnitOfEnergy.WATT_HOUR,
-                state_class=SensorStateClass.TOTAL_INCREASING,
-                device_class=SensorDeviceClass.ENERGY,
-                icon="mdi:flash",
-            ),
-            GaroSensor(
-                device,
-                "Total Energy (kWh)",
-                "latest_reading_k",
-                unit=UnitOfEnergy.KILO_WATT_HOUR,
-                state_class=SensorStateClass.TOTAL_INCREASING,
-                device_class=SensorDeviceClass.ENERGY,
-                icon="mdi:flash",
-            ),
-            GaroSensor(
-                device,
-                "Temperature",
-                "current_temperature",
-                unit=UnitOfTemperature.CELSIUS,
-                state_class=SensorStateClass.MEASUREMENT,
-                device_class=SensorDeviceClass.TEMPERATURE,
-                icon="mdi:thermometer",
-            ),
         ]
     )
+
+    # Add charger entities
+    for charger in device.chargers:
+        async_add_entities(
+            [
+                GaroSensor(
+                    device,
+                    "Status",
+                    "status",
+                    group=charger,
+                    device_class=SensorDeviceClass.ENUM,
+                    icon_fn=_status_icon,
+                ),
+                GaroSensor(
+                    device,
+                    "Charging Current",
+                    "current_charging_current",
+                    group=charger,
+                    unit=UnitOfElectricCurrent.AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    device_class=SensorDeviceClass.CURRENT,
+                    icon="mdi:flash",
+                ),
+                GaroSensor(
+                    device,
+                    "Charging Power",
+                    "current_charging_power",
+                    group=charger,
+                    unit=UnitOfPower.WATT,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    device_class=SensorDeviceClass.POWER,
+                    icon="mdi:flash",
+                    # TODO try mdi:resistor
+                ),
+                GaroSensor(
+                    device,
+                    "Phases",
+                    "nr_of_phases",
+                    group=charger,
+                    icon_fn=_nr_of_phases_icon,
+                    state_class=SensorStateClass.MEASUREMENT,
+                ),
+                GaroSensor(
+                    device,
+                    "Session Energy",
+                    "acc_session_energy",
+                    group=charger,
+                    unit=UnitOfEnergy.WATT_HOUR,
+                    state_class=SensorStateClass.TOTAL_INCREASING,
+                    device_class=SensorDeviceClass.ENERGY,
+                    icon="mdi:flash",
+                ),
+                GaroSensor(
+                    device,
+                    "Total Energy",
+                    "latest_reading",
+                    group=charger,
+                    unit=UnitOfEnergy.WATT_HOUR,
+                    state_class=SensorStateClass.TOTAL_INCREASING,
+                    device_class=SensorDeviceClass.ENERGY,
+                    icon="mdi:flash",
+                ),
+                GaroSensor(
+                    device,
+                    "Total Energy (kWh)",
+                    "latest_reading_k",
+                    group=charger,
+                    unit=UnitOfEnergy.KILO_WATT_HOUR,
+                    state_class=SensorStateClass.TOTAL_INCREASING,
+                    device_class=SensorDeviceClass.ENERGY,
+                ),
+            ]
+        )
 
     platform = entity_platform.current_platform.get()
 
@@ -188,6 +194,7 @@ class GaroSensor(SensorEntity):
         device: GaroDevice,
         name,
         sensor,
+        group=None,
         unit=None,
         state_class=None,
         device_class=None,
@@ -197,11 +204,18 @@ class GaroSensor(SensorEntity):
         """Initialize the sensor."""
 
         self._device = device
+        self._groupid = group and group[1]
         self._sensor = sensor
 
-        self._attr_name = f"{device.name} {name}"
         self._attr_native_unit_of_measurement = unit
-        self._attr_unique_id = f"{device.id_}-{sensor}"
+
+        if group is None:
+            self._attr_name = f"{device.name} {name}"
+            self._attr_unique_id = f"{device.id_}-{sensor}"
+        else:
+            self._attr_name = f"{device.name} {group[0]} {name}"
+            self._attr_unique_id = f"{device.id_}-{group[1]}-{sensor}"
+
         self._attr_device_info = device.device_info
 
         self._attr_state_class = state_class
@@ -217,10 +231,16 @@ class GaroSensor(SensorEntity):
 
         return self._attr_icon_fn(self.native_value)
 
+    def _value(self, attr):
+        if self._groupid is None:
+            return self._device.status.__dict__[attr]
+        else:
+            return self._device.status.__dict__[self._groupid].__dict__[attr]
+
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self._device.status.__dict__[self._sensor]
+        return self._value(self._sensor)
 
     async def async_update(self):
         """Update the Garo Wallbox status."""

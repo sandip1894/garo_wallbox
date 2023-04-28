@@ -99,6 +99,14 @@ class GaroDevice:
             name=self.name,
         )
 
+    @property
+    def chargers(self):
+        """Return a list of tubple with charger name and charger id"""
+        return [
+            ("Main Charger", "main_charger"),
+            ("Twin Charger", "twin_charger"),
+        ][: self.info.nof_chargers]
+
     def _request(self, parameter_list):
         pass
 
@@ -119,7 +127,7 @@ class GaroDevice:
             )
 
         response_json = await response.json()
-        self._status = GaroStatus(response_json, self._status)
+        self._status = GaroStatus(response_json, self)
 
     async def async_get_info(self):
         """Fetch Garo Wallbox configuration information."""
@@ -182,16 +190,37 @@ class GaroDevice:
 class GaroStatus:
     """Class representing Garo status."""
 
-    def __init__(self, response, prev_status) -> None:
+    def __init__(self, response, device) -> None:
         self.ocpp_state = response["ocppState"]
         self.free_charging = response["freeCharging"]
         self.ocpp_connection_state = response["ocppConnectionState"]
-        self.status = _status_to_descr(Status(response["connector"]))
         self.mode = Mode(response["mode"])
         self.current_limit = response["currentLimit"]
         self.factory_current_limit = response["factoryCurrentLimit"]
         self.switch_current_limit = response["switchCurrentLimit"]
         self.power_mode = response["powerMode"]
+        self.temperature = response["currentTemperature"]
+
+        if "mainCharger" in response:
+            self.main_charger = GaroChargerStatus(
+                response["mainCharger"], device.status and device.status.main_charger
+            )
+        else:
+            self.main_charger = GaroChargerStatus(
+                response, device.status and device.status.main_charger
+            )
+        if "twinCharger" in response:
+            self.twin_charger = GaroChargerStatus(
+                response["twinCharger"], device.status and device.status.twin_charger
+            )
+
+
+class GaroChargerStatus:
+    """Class representing Garo charger status."""
+
+    def __init__(self, response, prev_status) -> None:
+        self.status = _status_to_descr(Status(response["connector"]))
+
         self.current_charging_current = max(
             0, response["currentChargingCurrent"] / 1000
         )
@@ -199,7 +228,8 @@ class GaroStatus:
         if self.current_charging_power > 32000:
             self.current_charging_power = 0
         self.acc_session_energy = response["accSessionEnergy"]
-        last_reading = response["latestReading"]
+
+        last_reading = response["accEnergy"]
         if (
             prev_status is not None
             and last_reading - prev_status.latest_reading > 500000
@@ -208,7 +238,7 @@ class GaroStatus:
 
         self.latest_reading = last_reading
         self.latest_reading_k = max(0, last_reading / 1000)
-        self.current_temperature = response["currentTemperature"]
+
         self.pilot_level = response["pilotLevel"]
         self.session_start_value = response["sessionStartValue"]
         self.nr_of_phases = response["nrOfPhases"]
@@ -247,3 +277,5 @@ class GaroDeviceInfo:
         self.product_id = response["productId"]
         self.model = GARO_PRODUCT_MAP[int(self.product_id)]
         self.max_current = response["maxChargeCurrent"]
+
+        self.nof_chargers = len(response["slaveList"])
