@@ -191,9 +191,6 @@ class GaroStatus:
     """Class representing Garo status."""
 
     def __init__(self, response, device) -> None:
-        self.ocpp_state = response["ocppState"]
-        self.free_charging = response["freeCharging"]
-        self.ocpp_connection_state = response["ocppConnectionState"]
         self.mode = Mode(response["mode"])
         self.current_limit = response["currentLimit"]
         self.factory_current_limit = response["factoryCurrentLimit"]
