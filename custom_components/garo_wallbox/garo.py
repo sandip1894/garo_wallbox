@@ -192,11 +192,15 @@ class GaroStatus:
 
     def __init__(self, response, device) -> None:
         self.mode = Mode(response["mode"])
+
+        self.temperature = response["currentTemperature"]
+        self.temperature_warning = device.info.temperature_warning
+        self.temperature_cutoff = device.info.temperature_cutoff
+
         self.current_limit = response["currentLimit"]
         self.factory_current_limit = response["factoryCurrentLimit"]
         self.switch_current_limit = response["switchCurrentLimit"]
         self.power_mode = response["powerMode"]
-        self.temperature = response["currentTemperature"]
 
         if "mainCharger" in response:
             self.main_charger = GaroChargerStatus(
@@ -216,15 +220,19 @@ class GaroChargerStatus:
     """Class representing Garo charger status."""
 
     def __init__(self, response, prev_status) -> None:
-        self.status = _status_to_descr(Status(response["connector"]))
+        self.status = Status(response["connector"])
+        self.status_descr = _status_to_descr(self.status)
+        self.nr_of_phases = response["nrOfPhases"]
 
         self.current_charging_current = max(
             0, response["currentChargingCurrent"] / 1000
         )
+        self.pilot_level = response["pilotLevel"]
+        self.min_current_limit = response["minCurrentLimit"]
+
         self.current_charging_power = max(0, response["currentChargingPower"])
         if self.current_charging_power > 32000:
             self.current_charging_power = 0
-        self.acc_session_energy = response["accSessionEnergy"]
 
         last_reading = response["accEnergy"]
         if (
@@ -236,9 +244,10 @@ class GaroChargerStatus:
         self.latest_reading = last_reading
         self.latest_reading_k = max(0, last_reading / 1000)
 
-        self.pilot_level = response["pilotLevel"]
-        self.session_start_value = response["sessionStartValue"]
-        self.nr_of_phases = response["nrOfPhases"]
+        self.acc_session_energy = response["accSessionEnergy"]
+        self.session_start_energy = response["sessionStartValue"]
+        self.session_start_time = response["sessionStartTime"]
+        self.session_duration = response["accSessionMillis"] / 1000
 
 
 def _status_to_descr(status):
@@ -270,6 +279,9 @@ class GaroDeviceInfo:
     """Class representing Garo information."""
 
     def __init__(self, response) -> None:
+        self.temperature_warning = (response["warningTemperature"],)
+        self.temperature_cutoff = (response["cutoffTemperature"],)
+
         self.serial = response["serialNumber"]
         self.product_id = response["productId"]
         self.model = GARO_PRODUCT_MAP[int(self.product_id)]

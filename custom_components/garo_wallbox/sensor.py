@@ -53,6 +53,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 unit=UnitOfTemperature.CELSIUS,
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.TEMPERATURE,
+                extra_attributes=["temperature_warning", "temperature_cutoff"],
                 icon="mdi:thermometer",
             ),
             GaroSensor(
@@ -62,6 +63,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 unit=UnitOfElectricCurrent.AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.CURRENT,
+                extra_attributes=["factory_current_limit", "switch_current_limit"],
                 icon="mdi:flash",
             ),
         ]
@@ -77,6 +79,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     "status",
                     group=charger,
                     device_class=SensorDeviceClass.ENUM,
+                    extra_attributes=["status_descr", "nr_of_phases"],
                     icon_fn=_status_icon,
                 ),
                 GaroSensor(
@@ -87,6 +90,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     unit=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     device_class=SensorDeviceClass.CURRENT,
+                    extra_attributes=["pilot_level", "min_current_limit"],
                     icon="mdi:flash",
                 ),
                 GaroSensor(
@@ -98,15 +102,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     state_class=SensorStateClass.MEASUREMENT,
                     device_class=SensorDeviceClass.POWER,
                     icon="mdi:flash",
-                    # TODO try mdi:resistor
-                ),
-                GaroSensor(
-                    device,
-                    "Phases",
-                    "nr_of_phases",
-                    group=charger,
-                    icon_fn=_nr_of_phases_icon,
-                    state_class=SensorStateClass.MEASUREMENT,
                 ),
                 GaroSensor(
                     device,
@@ -116,6 +111,11 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     unit=UnitOfEnergy.WATT_HOUR,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     device_class=SensorDeviceClass.ENERGY,
+                    extra_attributes=[
+                        "session_start_energy",
+                        "session_start_time",
+                        "session_duration",
+                    ],
                     icon="mdi:flash",
                 ),
                 GaroSensor(
