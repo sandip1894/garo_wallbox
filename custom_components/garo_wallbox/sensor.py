@@ -1,5 +1,6 @@
 """Implementation of Garo Wallbox sensors."""
 import logging
+from typing import Any
 
 import voluptuous as vol
 
@@ -200,12 +201,14 @@ class GaroSensor(SensorEntity):
         device_class=None,
         icon=None,
         icon_fn=None,
+        extra_attributes=None,
     ) -> None:
         """Initialize the sensor."""
 
         self._device = device
         self._groupid = group and group[1]
         self._sensor = sensor
+        self._extra_attributes = extra_attributes
 
         self._attr_native_unit_of_measurement = unit
 
@@ -241,6 +244,13 @@ class GaroSensor(SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         return self._value(self._sensor)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the optional state attributes."""
+        if self._extra_attributes is not None:
+            return {attr: self._value(attr) for attr in self._extra_attributes}
+        return None
 
     async def async_update(self):
         """Update the Garo Wallbox status."""
