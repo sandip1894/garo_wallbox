@@ -84,6 +84,14 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 ),
                 GaroSensor(
                     device,
+                    "Charge status",
+                    "charge_status",
+                    group=charger,
+                    device_class=SensorDeviceClass.ENUM,
+                    icon="mdi:help",
+                ),
+                GaroSensor(
+                    device,
                     "Charging Current",
                     "charging_current",
                     group=charger,
@@ -136,6 +144,31 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     unit=UnitOfEnergy.KILO_WATT_HOUR,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     device_class=SensorDeviceClass.ENERGY,
+                ),
+                GaroSensor(
+                    device,
+                    "Load Balancing",
+                    "load_balancing",
+                    group=charger,
+                    device_class=SensorDeviceClass.ENUM,
+                    extra_attributes=["load_balanceing_phase"],
+                    icon="mdi:scale-unbalanced",
+                ),
+                GaroSensor(
+                    device,
+                    "Cable Lock Mode",
+                    "cable_lock_mode",
+                    group=charger,
+                    device_class=SensorDeviceClass.ENUM,
+                    icon="mdi:lock",
+                ),
+                GaroSensor(
+                    device,
+                    "Dip Switch Setting",
+                    "dip_switch_setting",
+                    group=charger,
+                    device_class=SensorDeviceClass.ENUM,
+                    icon="mdi:dip-switch",
                 ),
             ]
         )

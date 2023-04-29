@@ -224,6 +224,8 @@ class GaroChargerStatus:
         self.status_descr = _status_to_descr(self.status)
         self.nr_of_phases = response["nrOfPhases"]
 
+        self.charge_status = response["chargeStatus"]
+
         self.charging_current = max(0, response["currentChargingCurrent"] / 1000)
         self.pilot_level = response["pilotLevel"]
         self.min_current_limit = response["minCurrentLimit"]
@@ -243,6 +245,15 @@ class GaroChargerStatus:
         self.session_start_energy = response["sessionStartValue"]
         self.session_start_time = response["sessionStartTime"]
         self.session_duration = response["accSessionMillis"] / 1000
+
+        self.load_balancing = response["loadBalanced"]
+        self.load_balanceing_phase = response["phase"]
+
+        # TODO Can this one be controlled?
+        self.cable_lock_mode = response["cableLockMode"]
+
+        # TODO As sub to status? What does it mean? Check manual
+        self.dip_switch_setting = response["dipSwitchSettings"]
 
 
 def _status_to_descr(status):
