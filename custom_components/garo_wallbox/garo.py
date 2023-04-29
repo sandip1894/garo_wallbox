@@ -224,27 +224,22 @@ class GaroChargerStatus:
         self.status_descr = _status_to_descr(self.status)
         self.nr_of_phases = response["nrOfPhases"]
 
-        self.current_charging_current = max(
-            0, response["currentChargingCurrent"] / 1000
-        )
+        self.charging_current = max(0, response["currentChargingCurrent"] / 1000)
         self.pilot_level = response["pilotLevel"]
         self.min_current_limit = response["minCurrentLimit"]
 
-        self.current_charging_power = max(0, response["currentChargingPower"])
-        if self.current_charging_power > 32000:
-            self.current_charging_power = 0
+        self.charging_power = max(0, response["currentChargingPower"])
+        if self.charging_power > 32000:
+            self.charging_power = 0
 
         last_reading = response["accEnergy"]
-        if (
-            prev_status is not None
-            and last_reading - prev_status.latest_reading > 500000
-        ):
-            last_reading = prev_status.latest_reading
+        if prev_status is not None and last_reading - prev_status.acc_energy > 500000:
+            last_reading = prev_status.acc_energy
 
-        self.latest_reading = last_reading
-        self.latest_reading_k = max(0, last_reading / 1000)
+        self.acc_energy = last_reading
+        self.acc_energy_k = max(0, last_reading / 1000)
 
-        self.acc_session_energy = response["accSessionEnergy"]
+        self.session_acc_energy = response["accSessionEnergy"]
         self.session_start_energy = response["sessionStartValue"]
         self.session_start_time = response["sessionStartTime"]
         self.session_duration = response["accSessionMillis"] / 1000

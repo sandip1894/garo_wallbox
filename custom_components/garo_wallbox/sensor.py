@@ -85,7 +85,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 GaroSensor(
                     device,
                     "Charging Current",
-                    "current_charging_current",
+                    "charging_current",
                     group=charger,
                     unit=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -96,7 +96,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 GaroSensor(
                     device,
                     "Charging Power",
-                    "current_charging_power",
+                    "charging_power",
                     group=charger,
                     unit=UnitOfPower.WATT,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -106,7 +106,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 GaroSensor(
                     device,
                     "Session Energy",
-                    "acc_session_energy",
+                    "session_acc_energy",
                     group=charger,
                     unit=UnitOfEnergy.WATT_HOUR,
                     state_class=SensorStateClass.TOTAL_INCREASING,
@@ -121,7 +121,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 GaroSensor(
                     device,
                     "Total Energy",
-                    "latest_reading",
+                    "acc_energy",
                     group=charger,
                     unit=UnitOfEnergy.WATT_HOUR,
                     state_class=SensorStateClass.TOTAL_INCREASING,
@@ -131,7 +131,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 GaroSensor(
                     device,
                     "Total Energy (kWh)",
-                    "latest_reading_k",
+                    "acc_energy_k",
                     group=charger,
                     unit=UnitOfEnergy.KILO_WATT_HOUR,
                     state_class=SensorStateClass.TOTAL_INCREASING,
