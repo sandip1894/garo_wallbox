@@ -200,6 +200,7 @@ class GaroStatus:
         self.current_limit = response["currentLimit"]
         self.factory_current_limit = response["factoryCurrentLimit"]
         self.switch_current_limit = response["switchCurrentLimit"]
+
         self.power_mode = response["powerMode"]
 
         if "mainCharger" in response:
@@ -239,7 +240,6 @@ class GaroChargerStatus:
             last_reading = prev_status.acc_energy
 
         self.acc_energy = last_reading
-        self.acc_energy_k = max(0, last_reading / 1000)
 
         self.session_acc_energy = response["accSessionEnergy"]
         self.session_start_energy = response["sessionStartValue"]

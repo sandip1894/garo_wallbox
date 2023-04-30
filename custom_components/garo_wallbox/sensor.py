@@ -138,15 +138,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 ),
                 GaroSensor(
                     device,
-                    "Total Energy (kWh)",
-                    "acc_energy_k",
-                    group=charger,
-                    unit=UnitOfEnergy.KILO_WATT_HOUR,
-                    state_class=SensorStateClass.TOTAL_INCREASING,
-                    device_class=SensorDeviceClass.ENERGY,
-                ),
-                GaroSensor(
-                    device,
                     "Load Balancing",
                     "load_balancing",
                     group=charger,
