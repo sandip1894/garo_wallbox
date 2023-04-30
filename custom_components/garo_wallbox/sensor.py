@@ -64,7 +64,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.CURRENT,
                 extra_attributes=["factory_current_limit", "switch_current_limit"],
-                icon="mdi:flash",
+                icon="mdi:car-speed-limiter",
             ),
         ]
     )
@@ -99,7 +99,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     state_class=SensorStateClass.MEASUREMENT,
                     device_class=SensorDeviceClass.CURRENT,
                     extra_attributes=["pilot_level", "min_current_limit"],
-                    icon="mdi:flash",
+                    # icon="mdi:lightning-bolt-circle",
                 ),
                 GaroSensor(
                     device,
@@ -109,7 +109,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     unit=UnitOfPower.WATT,
                     state_class=SensorStateClass.MEASUREMENT,
                     device_class=SensorDeviceClass.POWER,
-                    icon="mdi:flash",
+                    # icon="mdi:resistor",
                 ),
                 GaroSensor(
                     device,
@@ -124,7 +124,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                         "session_start_time",
                         "session_duration",
                     ],
-                    icon="mdi:flash",
+                    icon="mdi:clock-start",
                 ),
                 GaroSensor(
                     device,
@@ -134,7 +134,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     unit=UnitOfEnergy.WATT_HOUR,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     device_class=SensorDeviceClass.ENERGY,
-                    icon="mdi:flash",
+                    # icon="mdi:gauge",
                 ),
                 GaroSensor(
                     device,
@@ -199,7 +199,7 @@ class GaroMainSensor(Entity):
         self._device = device
         self._attr_name = f"{device.name}"
         self._attr_unique_id = f"{self._device.id_}-sensor"
-        self._attr_icon = "mdi:car-electric"
+        self._attr_icon = "mdi:ev-station"
         self._attr_device_info = device.device_info
 
     @property
