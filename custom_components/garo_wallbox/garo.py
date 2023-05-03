@@ -200,6 +200,7 @@ class GaroDevice:
         return f"http://{self.host}:8080/servlet/rest/chargebox/{action}{tick}"
 
     async def get_json_response(self, action, add_tick):
+        """Get response and return as json."""
         url = self.__get_url(action, add_tick)
         response = await self._session.request(method="GET", url=url)
         json_response = await response.json()
@@ -325,6 +326,8 @@ class GaroDeviceInfo:
 
 
 class MeterDevice:
+    """Class representing a Meter device"""
+
     def __init__(self, device):
         self.main_device = device
         self.name = device.name + " meter"
@@ -333,35 +336,41 @@ class MeterDevice:
         self.id_ = None
 
     async def init(self):
+        """Initialise the Meter device."""
         await self.async_update()
-        self.id_ = "garo_{}".format(self.status.serial)
+        self.id_ = f"garo_{self.status.serial}"
 
     @property
     def device_info(self):
         """Return a device description for device registry."""
-        return {
-            "identifiers": {(DOMAIN, self.id_)},
-            "manufacturer": "Garo",
-            "model": self.status.type,
-            "name": self.name,
-            "via_device": (DOMAIN, self.main_device.id_),
-        }
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.id_)},
+            manufacturer="Garo",
+            model=self.status.type,
+            name=self.name,
+            via_device=(DOMAIN, self.main_device.id_),
+        )
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def async_update(self):
+        """Fetch Meter status."""
         json = await self.main_device.get_json_response(self.meter_action, True)
         self.status = MeterStatus(json)
 
 
 class MeterStatus:
+    """Class representing Meter status."""
+
     def __init__(self, response):
         self.serial = response["meterSerial"]
         self.type = response["type"]
+
         # TODO, use current divider based on firmware version
         self.phase1_current = response["phase1Current"] / CURRENT_DIVIDER
         self.phase2_current = response["phase2Current"] / CURRENT_DIVIDER
         self.phase3_current = response["phase3Current"] / CURRENT_DIVIDER
+
         current = self.phase1_current + self.phase2_current + self.phase3_current
         self.power = int(round(current * VOLTAGE, -1))
-        self.acc_energy_k = round(response["accEnergy"] / 1000, 1)
-        _LOGGER.debug(self.__dict__)
+
+        self.acc_energy = response["accEnergy"]

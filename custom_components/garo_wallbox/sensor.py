@@ -167,11 +167,46 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     if device.meter:
         async_add_entities(
             [
-                GaroSensor(device.meter, "Total Energy", "acc_energy_k", unit="kWh"),
-                GaroSensor(device.meter, "Power", "power", unit="W"),
-                GaroSensor(device.meter, "Phase 1 current", "phase1_current", unit="A"),
-                GaroSensor(device.meter, "Phase 2 current", "phase2_current", unit="A"),
-                GaroSensor(device.meter, "Phase 3 current", "phase3_current", unit="A"),
+                GaroSensor(
+                    device.meter,
+                    "Total Energy",
+                    "acc_energy",
+                    unit=UnitOfEnergy.WATT_HOUR,
+                    state_class=SensorStateClass.TOTAL_INCREASING,
+                    device_class=SensorDeviceClass.ENERGY,
+                ),
+                GaroSensor(
+                    device.meter,
+                    "Power",
+                    "power",
+                    unit=UnitOfPower.WATT,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    device_class=SensorDeviceClass.POWER,
+                ),
+                GaroSensor(
+                    device.meter,
+                    "Phase 1 current",
+                    "phase1_current",
+                    unit=UnitOfElectricCurrent.AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    device_class=SensorDeviceClass.CURRENT,
+                ),
+                GaroSensor(
+                    device.meter,
+                    "Phase 2 current",
+                    "phase2_current",
+                    unit=UnitOfElectricCurrent.AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    device_class=SensorDeviceClass.CURRENT,
+                ),
+                GaroSensor(
+                    device.meter,
+                    "Phase 3 current",
+                    "phase3_current",
+                    unit=UnitOfElectricCurrent.AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    device_class=SensorDeviceClass.CURRENT,
+                ),
             ],
             update_before_add=True,
         )
