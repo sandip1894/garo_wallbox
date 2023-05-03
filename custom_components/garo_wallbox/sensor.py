@@ -164,6 +164,18 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
             ]
         )
 
+    if device.meter:
+        async_add_entities(
+            [
+                GaroSensor(device.meter, "Total Energy", "acc_energy_k", unit="kWh"),
+                GaroSensor(device.meter, "Power", "power", unit="W"),
+                GaroSensor(device.meter, "Phase 1 current", "phase1_current", unit="A"),
+                GaroSensor(device.meter, "Phase 2 current", "phase2_current", unit="A"),
+                GaroSensor(device.meter, "Phase 3 current", "phase3_current", unit="A"),
+            ],
+            update_before_add=True,
+        )
+
     platform = entity_platform.current_platform.get()
 
     platform.async_register_entity_service(
